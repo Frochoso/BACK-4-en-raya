@@ -8,6 +8,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PlayerOutputDto {
+
     private Integer id;
+
+    private Integer player_Number;
+
     private String playerName;
 }

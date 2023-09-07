@@ -15,5 +15,6 @@ public interface PlayerMapper {
 
     @Mapping(target = "id", source = "id")
     @Mapping(target = "playerName", source = "playerName")
+    @Mapping(target = "playerNumber", source = "playerNumber")
     PlayerOutputDto playerToPlayerOutputDto(Player player);
 }

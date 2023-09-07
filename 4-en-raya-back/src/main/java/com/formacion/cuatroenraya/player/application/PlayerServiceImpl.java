@@ -1,6 +1,6 @@
 package com.formacion.cuatroenraya.player.application;
 
-import com.formacion.cuatroenraya.exceptions.playerExceptions.PlayerNotFoundException;
+import com.formacion.cuatroenraya.exceptions.playerExceptions.EntityNotFoundException;
 import com.formacion.cuatroenraya.exceptions.playerExceptions.UnprocessableEntityException;
 import com.formacion.cuatroenraya.player.domain.Player;
 import com.formacion.cuatroenraya.player.infrastructure.controller.dto.PlayerInputDto;
@@ -34,22 +34,22 @@ public class PlayerServiceImpl implements PlayerService {
     }
 
     @Override
-    public Mono<PlayerOutputDto> getPlayerById(Integer id) throws PlayerNotFoundException {
+    public Mono<PlayerOutputDto> getPlayerById(Integer id) throws EntityNotFoundException {
 
         Mono<Player> playerMono = playerRepository.findById(id);
 
         return playerMono
                 .map(playerResult -> mapper.playerToPlayerOutputDto(playerResult))
-                .switchIfEmpty(Mono.error(new PlayerNotFoundException("Player not found")));
+                .switchIfEmpty(Mono.error(new EntityNotFoundException("Player not found")));
     }
 
     @Override
-    public Mono<PlayerOutputDto> findPlayerByName(String playerName) throws PlayerNotFoundException {
+    public Mono<PlayerOutputDto> findPlayerByName(String playerName) throws EntityNotFoundException {
 
         Mono<Player> playerMono = playerRepository.findPlayerByPlayerName(playerName);
 
         return playerMono.map(playerResult -> mapper.playerToPlayerOutputDto(playerResult))
-                .switchIfEmpty(Mono.error(new PlayerNotFoundException("Player not found")));
+                .switchIfEmpty(Mono.error(new EntityNotFoundException("Player not found")));
     }
 
     @Override

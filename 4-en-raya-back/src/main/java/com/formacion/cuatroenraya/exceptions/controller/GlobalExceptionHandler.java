@@ -1,7 +1,7 @@
 package com.formacion.cuatroenraya.exceptions.controller;
 
 import com.formacion.cuatroenraya.exceptions.error.CustomError;
-import com.formacion.cuatroenraya.exceptions.playerExceptions.PlayerNotFoundException;
+import com.formacion.cuatroenraya.exceptions.playerExceptions.EntityNotFoundException;
 import com.formacion.cuatroenraya.exceptions.playerExceptions.UnprocessableEntityException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -14,10 +14,10 @@ import java.util.Date;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
-    @ExceptionHandler(PlayerNotFoundException.class)
+    @ExceptionHandler(EntityNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     @ResponseBody
-    public Mono<CustomError> handlePlayerNotFoundException(PlayerNotFoundException ex) {
+    public Mono<CustomError> handlePlayerNotFoundException(EntityNotFoundException ex) {
         CustomError customError = new CustomError(new Date(), HttpStatus.NOT_FOUND.value(), "Player not found");
         return Mono.just(customError);
     }
