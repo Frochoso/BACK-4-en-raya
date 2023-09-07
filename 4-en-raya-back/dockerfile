@@ -1,0 +1,19 @@
+# Usa una imagen base de PostgreSQL
+FROM postgres:latest
+
+ 
+
+# Variables de entorno para configurar la base de datos
+ENV POSTGRES_USER postgres
+ENV POSTGRES_PASSWORD password
+ENV POSTGRES_DB cuatro_en_raya
+
+ 
+
+# Copia archivos SQL de inicialización (si es necesario)
+COPY cuatro_en_raya_backup.sql /docker-entrypoint-initdb.d/
+
+ 
+
+# Exponer el puerto PostgreSQL (por defecto, 5432)
+EXPOSE 5432

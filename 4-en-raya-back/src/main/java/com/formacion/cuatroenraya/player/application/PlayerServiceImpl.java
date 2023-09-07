@@ -18,7 +18,7 @@ import reactor.core.publisher.Mono;
 @Slf4j
 public class PlayerServiceImpl implements PlayerService {
     @Autowired
-    PlayerRepository jugadorRepository;
+    PlayerRepository playerRepository;
     PlayerMapper mapper = Mappers.getMapper(PlayerMapper.class);
 
     public Mono<PlayerOutputDto> createPlayer(PlayerInputDto playerInputDto) throws UnprocessableEntityException {
@@ -26,30 +26,38 @@ public class PlayerServiceImpl implements PlayerService {
             throw new UnprocessableEntityException("Name field can't be null");
         }
 
-        Player player = mapper.jugadorInputToJugador(playerInputDto);
+        Player player = mapper.playerInputDtoToPlayer(playerInputDto);
 
-        Mono<Player> jugadorMono = jugadorRepository.save(player);
+        Mono<Player> playerMono = playerRepository.save(player);
 
-        return jugadorMono.map(jugadorResultado -> mapper.jugadorToJugadorOutputDto(jugadorResultado));
+        return playerMono.map(playerResult -> mapper.playerToPlayerOutputDto(playerResult));
     }
 
     @Override
     public Mono<PlayerOutputDto> getPlayerById(Integer id) throws PlayerNotFoundException {
 
-        Mono<Player> jugadorMono = jugadorRepository.findById(id);
+        Mono<Player> playerMono = playerRepository.findById(id);
 
-        return jugadorMono.map(jugadorResultado -> mapper.jugadorToJugadorOutputDto(jugadorResultado))
+        return playerMono
+                .map(playerResult -> mapper.playerToPlayerOutputDto(playerResult))
                 .switchIfEmpty(Mono.error(new PlayerNotFoundException("Player not found")));
     }
 
     @Override
-    public Mono<Player> findPlayerByName(String playerName) throws PlayerNotFoundException {
-        return jugadorRepository.findPlayerByPlayerName(playerName)
+    public Mono<PlayerOutputDto> findPlayerByName(String playerName) throws PlayerNotFoundException {
+
+        Mono<Player> playerMono = playerRepository.findPlayerByPlayerName(playerName);
+
+        return playerMono.map(playerResult -> mapper.playerToPlayerOutputDto(playerResult))
                 .switchIfEmpty(Mono.error(new PlayerNotFoundException("Player not found")));
     }
 
     @Override
-    public Flux<Player> getAllPlayers() {
-        return jugadorRepository.findAll();
+    public Flux<PlayerOutputDto> getAllPlayers() {
+
+        Flux<Player> playersFlux = playerRepository.findAll();
+
+        return playersFlux
+                .map(playersResult -> mapper.playerToPlayerOutputDto(playersResult));
     }
 }

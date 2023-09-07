@@ -17,25 +17,25 @@ import reactor.core.publisher.Mono;
 @Slf4j
 public class PlayerController {
     @Autowired
-    PlayerService jugadorService;
+    PlayerService playerService;
 
     @PostMapping()
     public ResponseEntity<Mono<PlayerOutputDto>> createPlayer(@RequestBody PlayerInputDto playerInputDto) {
-        return new ResponseEntity<>(jugadorService.createPlayer(playerInputDto), HttpStatus.CREATED);
+        return new ResponseEntity<>(playerService.createPlayer(playerInputDto), HttpStatus.CREATED);
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/findById/{id}")
     public ResponseEntity<Mono<PlayerOutputDto>> getPlayerById(@PathVariable Integer id) {
-        return new ResponseEntity<>(jugadorService.getPlayerById(id), HttpStatus.OK);
+        return new ResponseEntity<>(playerService.getPlayerById(id), HttpStatus.OK);
     }
 
-    @GetMapping("/{playerName}")
-    public ResponseEntity<Mono<Player>> findPlayerBYName(@PathVariable String playerName) {
-        return new ResponseEntity<>(jugadorService.findPlayerByName(playerName), HttpStatus.OK);
+    @GetMapping("/findByName/{playerName}")
+    public ResponseEntity<Mono<PlayerOutputDto>> findPlayerByName(@PathVariable String playerName) {
+        return new ResponseEntity<>(playerService.findPlayerByName(playerName), HttpStatus.OK);
     }
 
     @GetMapping("/list")
-    public ResponseEntity<Flux<Player>> getAllPlayers() {
-        return new ResponseEntity<>(jugadorService.getAllPlayers(), HttpStatus.OK);
+    public ResponseEntity<Flux<PlayerOutputDto>> getAllPlayers() {
+        return new ResponseEntity<>(playerService.getAllPlayers(), HttpStatus.OK);
     }
 }

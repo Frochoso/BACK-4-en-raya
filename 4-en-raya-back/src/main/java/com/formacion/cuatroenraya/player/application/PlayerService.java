@@ -13,7 +13,7 @@ public interface PlayerService {
 
     Mono<PlayerOutputDto> getPlayerById(Integer id) throws PlayerNotFoundException;
 
-    Mono<Player> findPlayerByName(String playerName) throws PlayerNotFoundException;
+    Mono<PlayerOutputDto> findPlayerByName(String playerName) throws PlayerNotFoundException;
 
-    Flux<Player> getAllPlayers();
+    Flux<PlayerOutputDto> getAllPlayers();
 }

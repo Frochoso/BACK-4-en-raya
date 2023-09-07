@@ -11,9 +11,9 @@ public interface PlayerMapper {
 
     @Mapping(target = "id", source = "id")
     @Mapping(target = "playerName", source = "playerName")
-    Player jugadorInputToJugador(PlayerInputDto playerInputDto);
+    Player playerInputDtoToPlayer(PlayerInputDto playerInputDto);
 
     @Mapping(target = "id", source = "id")
     @Mapping(target = "playerName", source = "playerName")
-    PlayerOutputDto jugadorToJugadorOutputDto(Player player);
+    PlayerOutputDto playerToPlayerOutputDto(Player player);
 }
