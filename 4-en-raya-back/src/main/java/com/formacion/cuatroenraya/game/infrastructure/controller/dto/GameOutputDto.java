@@ -10,9 +10,9 @@ import lombok.Setter;
 public class GameOutputDto {
     private Integer id;
 
-    private Integer player1_id;
+    private Integer player1Id;
 
-    private Integer player2_id;
+    private Integer player2Id;
 
     private Integer[][] size;
 }

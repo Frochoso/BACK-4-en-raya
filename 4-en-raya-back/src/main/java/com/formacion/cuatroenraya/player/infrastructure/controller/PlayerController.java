@@ -38,4 +38,10 @@ public class PlayerController {
     public ResponseEntity<Flux<PlayerOutputDto>> getAllPlayers() {
         return new ResponseEntity<>(playerService.getAllPlayers(), HttpStatus.OK);
     }
+
+    @GetMapping("/findPlayer/{playerId}/findByGame/{gameId}")
+    public ResponseEntity<Mono<PlayerOutputDto>> findPlayerByGameIdAndPlayerId(@PathVariable Integer gameId,
+                                                                               @PathVariable Integer playerId) {
+        return new ResponseEntity<>(playerService.findPlayerByGameIdAndPlayerId(gameId, playerId), HttpStatus.OK);
+    }
 }

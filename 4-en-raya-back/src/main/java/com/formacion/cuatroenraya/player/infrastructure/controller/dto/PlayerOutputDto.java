@@ -11,7 +11,7 @@ public class PlayerOutputDto {
 
     private Integer id;
 
-    private Integer player_Number;
+    private Integer playerNumber;
 
     private String playerName;
 }

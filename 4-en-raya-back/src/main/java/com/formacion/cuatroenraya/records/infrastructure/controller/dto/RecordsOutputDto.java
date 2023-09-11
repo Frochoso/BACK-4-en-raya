@@ -1,4 +1,4 @@
-package com.formacion.cuatroenraya.moves.infrastructure.controller.dto;
+package com.formacion.cuatroenraya.records.infrastructure.controller.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @AllArgsConstructor
-public class MovesOutputDto {
+public class RecordsOutputDto {
     Integer id;
     LocalDateTime date;
     Integer row;

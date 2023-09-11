@@ -1,4 +1,4 @@
-package com.formacion.cuatroenraya.moves.domain;
+package com.formacion.cuatroenraya.records.domain;
 
 import lombok.*;
 import org.springframework.data.annotation.Id;
@@ -11,8 +11,8 @@ import java.time.LocalDateTime;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@Table("moves")
-public class Moves {
+@Table("records")
+public class Record {
     @Id
     private Integer id;
 

@@ -10,7 +10,7 @@ import reactor.core.publisher.Mono;
 public interface PlayerRepository extends ReactiveCrudRepository<Player, Integer> {
     Mono<Player> findPlayerByPlayerName(String playerName);
 
-    @Query("SELECT p.* FROM player p, game g WHERE p.playerNumer = :playerId" +
+    @Query("SELECT p.* FROM player p, game g WHERE p.player_number = :playerId" +
             " AND g.id = :gameId AND p.id = g.player1_id OR p.id = g.player2_id LIMIT 1")
     Mono<Player> findPlayerByGameIdAndPlayerId(Integer gameId, Integer playerId);
 

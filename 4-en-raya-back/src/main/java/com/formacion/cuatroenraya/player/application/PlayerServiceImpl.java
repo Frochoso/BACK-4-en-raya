@@ -53,6 +53,16 @@ public class PlayerServiceImpl implements PlayerService {
     }
 
     @Override
+    public Mono<PlayerOutputDto> findPlayerByGameIdAndPlayerId(Integer gameId, Integer playerId) {
+
+        Mono<Player> playerMono = playerRepository.findPlayerByGameIdAndPlayerId(gameId, playerId);
+
+        return playerMono
+                .map(playerResult -> mapper.playerToPlayerOutputDto(playerResult))
+                .switchIfEmpty(Mono.error(new EntityNotFoundException("Player not found")));
+    }
+
+    @Override
     public Flux<PlayerOutputDto> getAllPlayers() {
 
         Flux<Player> playersFlux = playerRepository.findAll();

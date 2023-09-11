@@ -9,10 +9,8 @@ import reactor.core.publisher.Mono;
 
 public interface PlayerService {
     Mono<PlayerOutputDto> createPlayer(PlayerInputDto playerInputDto) throws UnprocessableEntityException;
-
     Mono<PlayerOutputDto> getPlayerById(Integer id) throws EntityNotFoundException;
-
     Mono<PlayerOutputDto> findPlayerByName(String playerName) throws EntityNotFoundException;
-
+    Mono<PlayerOutputDto> findPlayerByGameIdAndPlayerId(Integer gameId, Integer playerId);
     Flux<PlayerOutputDto> getAllPlayers();
 }

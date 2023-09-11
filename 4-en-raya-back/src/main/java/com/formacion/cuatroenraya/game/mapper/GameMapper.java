@@ -5,17 +5,14 @@ import com.formacion.cuatroenraya.game.infrastructure.controller.dto.GameInputDt
 import com.formacion.cuatroenraya.game.infrastructure.controller.dto.GameOutputDto;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import reactor.core.publisher.Mono;
 
 @Mapper
 public interface GameMapper {
 
-    @Mapping(target="player1_id",source="player1_id")
-    @Mapping(target="player2_id",source="player2_id")
+    @Mapping(target="player1Id",source="player1Id")
+    @Mapping(target="player2Id",source="player2Id")
     @Mapping(target="size",source="size")
     Game gameInputDtoToGame(GameInputDto gameInputDto);
 
     GameOutputDto gameToGameOutputDto(Game game);
-
-    Mono<GameOutputDto> monoGameToMonoGameOutputDto(Mono<Game> game);
 }
