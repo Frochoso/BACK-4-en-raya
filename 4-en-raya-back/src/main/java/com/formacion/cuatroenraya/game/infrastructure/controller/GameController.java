@@ -1,7 +1,6 @@
 package com.formacion.cuatroenraya.game.infrastructure.controller;
 
 import com.formacion.cuatroenraya.game.application.GameService;
-import com.formacion.cuatroenraya.game.domain.Game;
 import com.formacion.cuatroenraya.game.infrastructure.controller.dto.GameOutputDto;
 import com.formacion.cuatroenraya.idManager.IdManager;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,13 +29,6 @@ public class GameController {
     @GetMapping("/getGame/{id}")
     public ResponseEntity<Mono<GameOutputDto>> getGameById(@PathVariable Integer id) {
         return new ResponseEntity<>(gameService.getGameById(id), HttpStatus.OK);
-    }
-
-    @PostMapping("/winner")
-    public ResponseEntity<Mono<String>> isWinner(@RequestBody Game game) {
-        return new ResponseEntity<>(gameService.getLastMove(game.getId()).defaultIfEmpty(1)
-                .flatMap(playerId ->
-                        gameService.checkWinner(game.getSize(), playerId)), HttpStatus.CREATED);
     }
 
     @GetMapping("/findAll")

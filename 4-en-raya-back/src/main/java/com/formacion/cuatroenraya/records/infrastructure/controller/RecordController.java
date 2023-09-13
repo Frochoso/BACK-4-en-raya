@@ -18,12 +18,6 @@ public class RecordController {
     @Autowired
     RecordsService recordsService;
 
-    // Crear histórico
-    @PostMapping()
-    public ResponseEntity<Mono<RecordsOutputDto>> createMove(@RequestBody RecordsInputDto recordsInputDto) {
-        return new ResponseEntity<>(recordsService.createRecord(recordsInputDto), HttpStatus.CREATED);
-    }
-
     // Obtener histórico concreto por su id
     @GetMapping("/{id}")
     public ResponseEntity<Mono<RecordsOutputDto>> getMoveById(@PathVariable Integer id) {

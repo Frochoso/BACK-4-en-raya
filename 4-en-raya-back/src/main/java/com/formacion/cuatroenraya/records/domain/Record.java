@@ -1,11 +1,14 @@
 package com.formacion.cuatroenraya.records.domain;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 @Getter
 @Setter
@@ -14,14 +17,15 @@ import java.time.LocalDateTime;
 @Table("records")
 public class Record {
     @Id
+    @Column("id")
     private Integer id;
 
-    @Column("date")
-    private LocalDateTime date;
-    @Column("row")
-    private Integer row;
-    @Column("column")
-    private Integer column;
+    @Column("record_date")
+    private LocalDate recordDate;
+    @Column("record_row")
+    private Integer recordRow;
+    @Column("record_column")
+    private Integer recordColumn;
     @Column("move_number")
     private Integer moveNumber;
     @Column("player_id")

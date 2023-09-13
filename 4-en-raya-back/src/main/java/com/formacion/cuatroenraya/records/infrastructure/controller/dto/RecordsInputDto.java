@@ -4,16 +4,16 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 @Getter
 @Setter
 @AllArgsConstructor
 public class RecordsInputDto {
     Integer id;
-    LocalDateTime date;
-    Integer row;
-    Integer column;
+    LocalDate recordDate;
+    Integer recordRow;
+    Integer recordColumn;
     Integer playerId;
     Integer gameId;
 }

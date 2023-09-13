@@ -1,9 +1,7 @@
 package com.formacion.cuatroenraya.records.application;
 
 import com.formacion.cuatroenraya.exceptions.playerExceptions.EntityNotFoundException;
-import com.formacion.cuatroenraya.exceptions.playerExceptions.UnprocessableEntityException;
 import com.formacion.cuatroenraya.records.domain.Record;
-import com.formacion.cuatroenraya.records.infrastructure.controller.dto.RecordsInputDto;
 import com.formacion.cuatroenraya.records.infrastructure.controller.dto.RecordsOutputDto;
 import com.formacion.cuatroenraya.records.infrastructure.repository.RecordsRepository;
 import com.formacion.cuatroenraya.records.mapper.RecordsMapper;
@@ -14,7 +12,7 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 @Service
 @Slf4j
@@ -22,19 +20,6 @@ public class RecordsServiceImpl implements RecordsService {
     @Autowired
     RecordsRepository recordsRepository;
     RecordsMapper recordMapper = Mappers.getMapper(RecordsMapper.class);
-    @Override
-    public Mono<RecordsOutputDto> createRecord(RecordsInputDto recordsInputDto) {
-
-        if (recordsInputDto.getGameId() == null && recordsInputDto.getPlayerId() == null) {
-            throw new UnprocessableEntityException("Game and Player fields must be filled");
-        }
-
-        Record record = recordMapper.recordsInputDtoToRecords(recordsInputDto);
-
-        Mono<Record> recordMono = recordsRepository.save(record);
-
-        return recordMono.map(recordResult -> recordMapper.recordsToRecordsOutputDto(recordResult));
-    }
 
     @Override
     public Mono<RecordsOutputDto> getRecordById(Integer id) {
@@ -61,22 +46,21 @@ public class RecordsServiceImpl implements RecordsService {
         Flux<Record> recordsFlux = recordsRepository.findRecordsByGameId(gameId);
 
         return recordsFlux
-                .map(recordResult -> recordMapper.recordsToRecordsOutputDto(recordResult));
+                .map(recordResult -> recordMapper.recordsToRecordsOutputDto(recordResult))
+                .switchIfEmpty(Mono.error(new EntityNotFoundException("Game not found")));
     }
 
     // Guarda en base de datos el movimiento
-    public void createMove(Integer gameId, Integer playerId, Integer row, Integer column) {
+    public Mono<Void> createMove(Integer gameId, Integer playerId, Integer row, Integer column) {
 
         Record move = new Record();
-        move.setDate(LocalDateTime.now());
-        move.setColumn(column);
-        move.setRow(row);
+        move.setRecordDate(LocalDate.now());
+        move.setRecordColumn(column);
+        move.setRecordRow(row);
         move.setMoveNumber(1);
         move.setPlayerId(playerId);
         move.setGameId(gameId);
 
-        recordsRepository.save(move).subscribe();
+        return recordsRepository.save(move).then();
     }
-
-
 }

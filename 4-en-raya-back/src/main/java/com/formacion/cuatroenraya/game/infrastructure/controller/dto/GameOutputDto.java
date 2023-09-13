@@ -15,4 +15,6 @@ public class GameOutputDto {
     private Integer player2Id;
 
     private Integer[][] size;
+
+    private Integer winner;
 }

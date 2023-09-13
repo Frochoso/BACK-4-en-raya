@@ -10,11 +10,11 @@ import reactor.core.publisher.Mono;
 @Repository
 public interface GameRepository extends ReactiveCrudRepository<Game, Integer> {
 
-    @Query("SELECT p.player_number" +
+    @Query("SELECT p.player_id" +
             " FROM player p" +
             " JOIN records r ON r.player_id = p.id" +
             " WHERE r.game_id = :gameId" +
-            " ORDER BY r.date DESC" +
+            " ORDER BY r.record_date DESC" +
             " LIMIT 1")
     Mono<Integer> findLastMove(Integer gameId);
 

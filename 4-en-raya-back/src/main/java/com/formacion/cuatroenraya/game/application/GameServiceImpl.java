@@ -1,19 +1,17 @@
 package com.formacion.cuatroenraya.game.application;
 
+import com.formacion.cuatroenraya.exceptions.playerExceptions.NoContentException;
 import com.formacion.cuatroenraya.exceptions.playerExceptions.EntityNotFoundException;
 import com.formacion.cuatroenraya.game.domain.Game;
 import com.formacion.cuatroenraya.game.infrastructure.controller.dto.GameOutputDto;
 import com.formacion.cuatroenraya.game.infrastructure.repository.GameRepository;
 import com.formacion.cuatroenraya.game.mapper.GameMapper;
 import com.formacion.cuatroenraya.idManager.IdManager;
-import com.formacion.cuatroenraya.records.application.RecordsServiceImpl;
-import com.formacion.cuatroenraya.player.domain.Player;
 import com.formacion.cuatroenraya.player.infrastructure.repository.PlayerRepository;
+import com.formacion.cuatroenraya.records.application.RecordsServiceImpl;
 import org.mapstruct.factory.Mappers;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -29,57 +27,62 @@ public class GameServiceImpl implements GameService {
     @Autowired
     RecordsServiceImpl recordsServiceImpl;
 
-    GameMapper gameMapper= Mappers.getMapper(GameMapper.class);
+    GameMapper gameMapper = Mappers.getMapper(GameMapper.class);
 
     @Override
     public Mono<GameOutputDto> createGame(Integer playerId) {
+        return playerRepository.findById(playerId)
+                .switchIfEmpty(Mono.error(new EntityNotFoundException("Player not found")))
+                .flatMap(player -> {
+                    player.setPlayerNumber(1);
+                    return playerRepository.save(player);
+                })
+                .then(Mono.defer(() -> {
+                    Game game = new Game();
 
-        Mono<Player> playerMono = playerRepository.findById(playerId)
-                .switchIfEmpty(Mono.error(new EntityNotFoundException("Player not found")));
+                    Integer[][] newSize = {
+                            {0, 0, 0, 0, 0, 0, 0},
+                            {0, 0, 0, 0, 0, 0, 0},
+                            {0, 0, 0, 0, 0, 0, 0},
+                            {0, 0, 0, 0, 0, 0, 0},
+                            {0, 0, 0, 0, 0, 0, 0},
+                            {0, 0, 0, 0, 0, 0, 0}
+                    };
 
-        playerMono.subscribe(player -> {player.setPlayerNumber(1);
-            playerRepository.save(player);
-        });
+                    game.setSize(newSize);
+                    game.setPlayer1Id(playerId);
+                    game.setPlayer2Id(null);
 
-        Game game = new Game();
-
-        Integer[][] newSize = new Integer[6][7];
-
-        for(Integer i=0;i<6;i++){
-            for(Integer j=0;j<7;j++){
-                newSize[i][j]=0;
-            }
-        }
-
-        game.setSize(newSize);
-
-        Mono<Game> gameMono = playerMono.flatMap( player1 -> {
-            game.setPlayer1Id(player1.getId());
-            game.setPlayer2Id(null);
-            return gameRepository.save(game);
-        });
-
-        return gameMono
+                    return gameRepository.save(game);
+                }))
                 .map(gameResult -> gameMapper.gameToGameOutputDto(gameResult));
+
     }
 
     @Override
     public Mono<Void> newMovement(IdManager idManager) {
         return gameRepository.findById(idManager.getGameId())
+                .switchIfEmpty(Mono.error(new EntityNotFoundException("Game not found")))
                 .flatMap(game -> {
-                    executeMove(idManager, game);
-                    return gameRepository.save(game);
+                    return executeMove(idManager, game)
+                            .then(finishMove(game, idManager.getPlayerId()));
                 })
                 .then();
     }
 
-    private void executeMove(IdManager idManager, Game game) {
-        if(game.getPlayer2Id() == null) {
+    public Mono<Void> finishMove(Game game, Integer playerId) {
+
+        game.setWinner(checkWinner(game.getSize(), playerId));
+        return gameRepository.save(game).then();
+    }
+
+    private Mono<Void> executeMove(IdManager idManager, Game game) {
+        if (game.getPlayer2Id() == null) {
             throw new EntityNotFoundException("There's not a second player");
         }
 
         if (game.getSize()[0][idManager.getColumn()] != 0) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Full column");
+            throw new NoContentException("Full column");
         }
 
         int row = -1;
@@ -91,14 +94,71 @@ public class GameServiceImpl implements GameService {
             }
         }
 
-        final int finalRow = row;
+        idManager.setRow(row);
+        return playerRepository
+                .findPlayerByGameIdAndPlayerId(game.getId(), idManager.getPlayerId())
+                .flatMap(player -> recordsServiceImpl.createMove(game.getId(), player.getId(), idManager.getRow(),
+                        idManager.getColumn()))
+                .then();
+    }
 
-        Mono<Player> playerMono = playerRepository
-                .findPlayerByGameIdAndPlayerId(game.getId(), idManager.getPlayerId());
+    @Override
+    public int checkWinner(Integer[][] size, Integer playerId) {
 
-        playerMono.subscribe(player -> {
-            recordsServiceImpl.createMove(game.getId(), player.getId(), finalRow, idManager.getColumn());
-        });
+        Integer counter = 0;
+
+        // Comprueba el empate - Devuelve 0 si hay empate
+        for (int i = 0; i < 6; i++) {
+            if (size[5][i] != 0) {
+                counter++;
+            }
+
+            if (counter >= 7) {
+                return 0;
+            }
+        }
+
+        // Casos de victoria - Devuelve el Id del ganador
+        for (int i = 1; i < 5; i += 1) {
+            for (int j = 0; j < 6 - 3; j += 1) {
+                if (size[i][j] == playerId && size[i][j + 1] == playerId
+                        && size[i][j + 2] == playerId && size[i][j + 3] == playerId) {
+                    return playerId;
+                }
+            }
+        }
+
+        for (int i = 0; i < 5; i += 1) {
+            for (int j = 0; j < 6 - 3; j += 1) {
+                if (size[j][i] == playerId && size[j + 1][i] == playerId
+                        && size[j + 2][i] == playerId && size[j + 3][i] == playerId) {
+                    return playerId;
+
+                }
+            }
+        }
+
+        for (int i = 0; i < 6 - 4 + 1; i += 1) {
+            for (int j = 0; j < 5 - 4 + 1; j += 1) {
+                if (size[j][i] == playerId && size[j + 1][i + 1] == playerId
+                        && size[j + 2][i + 2] == playerId && size[j + 3][i + 3] == playerId) {
+                    return playerId;
+
+                }
+            }
+        }
+
+        for (int i = 6; i > 3; i -= 1) {
+            for (int j = 0; j < 5 - 3; j += 1) {
+                if (size[j][i - 1] == playerId && size[j + 1][i - 2] == playerId
+                        && size[j + 2][i - 3] == playerId && size[j + 3][i - 4] == playerId) {
+                    return playerId;
+
+                }
+            }
+        }
+
+        return -1; // La partida continua, no ha terminado
     }
 
     @Override
@@ -112,53 +172,6 @@ public class GameServiceImpl implements GameService {
     }
 
     @Override
-    public Mono<Integer> getLastMove(Integer gameId) {
-
-        return gameRepository.findLastMove(gameId);
-    }
-
-    @Override
-    public Mono<String> checkWinner(Integer[][] size, Integer playerId) {
-        for (int i = 1; i < 5; i += 1) {
-            for (int j = 0; j < 6 - 3; j += 1) {
-                if (size[i][j] == playerId && size[i][j + 1] == playerId
-                        && size[i][j + 2] == playerId && size[i][j + 3] == playerId) {
-                    return Mono.just("Player: " + playerId + " has won");
-                }
-            }
-        }
-
-        for (int i = 0; i < 5; i += 1) {
-            for (int j = 0; j < 6 - 3; j += 1) {
-                if (size[j][i] == playerId && size[j + 1][i] == playerId
-                        && size[j + 2][i] == playerId && size[j + 3][i] == playerId) {
-                    return Mono.just("Player: " + playerId + " has won");
-                }
-            }
-        }
-
-        for (int i = 0; i < 6 - 4 + 1; i += 1) {
-            for (int j = 0; j < 5 - 4 + 1; j += 1) {
-                if (size[j][i] == playerId && size[j + 1][i + 1] == playerId
-                        && size[j + 2][i + 2] == playerId && size[j + 3][i + 3] == playerId) {
-                    return Mono.just("Player: " + playerId + " has won");
-                }
-            }
-        }
-
-        for (int i = 6; i > 3; i -= 1) {
-            for (int j = 0; j < 5 - 3; j += 1) {
-                if (size[j][i - 1] == playerId && size[j + 1][i - 2] == playerId
-                        && size[j + 2][i - 3] == playerId && size[j + 3][i - 4] == playerId) {
-                    return Mono.just("Player: " + playerId + " has won");
-                }
-            }
-        }
-
-        return Mono.just("");
-    }
-
-    @Override
     public Flux<GameOutputDto> getAllGames() {
         Flux<Game> gamesFlux = gameRepository.findAll();
 
@@ -167,23 +180,19 @@ public class GameServiceImpl implements GameService {
     }
 
     @Override
-    public Flux<GameOutputDto> findAllOnlyOnePlayer() {
-        Flux<Game> gameFlux = gameRepository.findAllOnlyOnePlayer();
-        return gameFlux
-                .map(gamesResult -> gameMapper.gameToGameOutputDto(gamesResult));
-    }
-
-    @Override
     public Mono<GameOutputDto> addPlayer2(Integer gameId, Integer playerId) {
 
         return gameRepository.findById(gameId)
-                .flatMap(game -> {
-                    return playerRepository.findById(playerId)
-                            .flatMap(player -> {
-                                game.setPlayer2Id(player.getId());
-                                return gameRepository.save(game)
-                                        .map(savedGame -> gameMapper.gameToGameOutputDto(savedGame));
-                            });
-                });
+                .switchIfEmpty(Mono.error(new EntityNotFoundException("Game not found")))
+                .flatMap(game -> playerRepository.findById(playerId)
+                        .switchIfEmpty(Mono.error(new EntityNotFoundException("Player not found")))
+                        .flatMap(player -> {
+                            player.setPlayerNumber(2);
+                            game.setPlayer2Id(player.getId());
+                            return playerRepository.save(player)
+                                    .then(gameRepository.save(game))
+                                    .map(savedGame -> gameMapper.gameToGameOutputDto(savedGame));
+                        }));
+
     }
 }

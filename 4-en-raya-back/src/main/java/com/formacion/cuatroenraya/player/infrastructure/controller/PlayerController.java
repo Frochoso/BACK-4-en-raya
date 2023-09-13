@@ -1,7 +1,6 @@
 package com.formacion.cuatroenraya.player.infrastructure.controller;
 
 import com.formacion.cuatroenraya.player.application.PlayerService;
-import com.formacion.cuatroenraya.player.domain.Player;
 import com.formacion.cuatroenraya.player.infrastructure.controller.dto.PlayerInputDto;
 import com.formacion.cuatroenraya.player.infrastructure.controller.dto.PlayerOutputDto;
 import lombok.extern.slf4j.Slf4j;
