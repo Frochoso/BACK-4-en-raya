@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.Objects;
+
 @RestController
 @RequestMapping("/game")
 public class GameController {
@@ -42,4 +44,9 @@ public class GameController {
         return new ResponseEntity<>(gameService.addPlayer2(gameId, playerId), HttpStatus.CREATED);
     }
 
+    @GetMapping("/checkTurn/{gameId}/{playerId}")
+    public ResponseEntity<Mono<Boolean>> checkPlayerTurn(@PathVariable Integer gameId, @PathVariable Integer playerId) {
+        return new ResponseEntity<>(gameService.getGameById(gameId)
+                .map(game -> Objects.equals(game.getTurn(), playerId)), HttpStatus.OK);
+    }
 }

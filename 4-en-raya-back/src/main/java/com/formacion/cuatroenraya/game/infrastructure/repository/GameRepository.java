@@ -20,4 +20,7 @@ public interface GameRepository extends ReactiveCrudRepository<Game, Integer> {
 
     @Query("SELECT g.* FROM game g WHERE g.player2_id IS NULL")
     Flux<Game> findAllOnlyOnePlayer();
+
+    @Query("SELECT g.turn FROM game g WHERE g.game_id =: gameId")
+    Mono<Integer> findNextPlayersTurn(Integer gameId);
 }

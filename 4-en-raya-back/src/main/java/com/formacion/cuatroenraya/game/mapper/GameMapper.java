@@ -12,6 +12,7 @@ public interface GameMapper {
     @Mapping(target="player1Id",source="player1Id")
     @Mapping(target="player2Id",source="player2Id")
     @Mapping(target="size",source="size")
+    @Mapping(target = "turn", source = "turn")
     Game gameInputDtoToGame(GameInputDto gameInputDto);
 
     GameOutputDto gameToGameOutputDto(Game game);

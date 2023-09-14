@@ -1,6 +1,5 @@
 package com.formacion.cuatroenraya.game.domain;
 
-import com.formacion.cuatroenraya.player.domain.Player;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -28,4 +27,6 @@ public class Game {
     private Integer[][] size;
 
     private Integer winner;
+
+    private Integer turn;
 }

@@ -17,4 +17,6 @@ public class GameOutputDto {
     private Integer[][] size;
 
     private Integer winner;
+
+    private Integer turn;
 }

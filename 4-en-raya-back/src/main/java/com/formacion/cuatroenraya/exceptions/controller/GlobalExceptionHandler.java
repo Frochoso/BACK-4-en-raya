@@ -1,6 +1,7 @@
 package com.formacion.cuatroenraya.exceptions.controller;
 
 import com.formacion.cuatroenraya.exceptions.error.CustomError;
+import com.formacion.cuatroenraya.exceptions.playerExceptions.BadRequestException;
 import com.formacion.cuatroenraya.exceptions.playerExceptions.NoContentException;
 import com.formacion.cuatroenraya.exceptions.playerExceptions.EntityNotFoundException;
 import com.formacion.cuatroenraya.exceptions.playerExceptions.UnprocessableEntityException;
@@ -34,8 +35,16 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(NoContentException.class)
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @ResponseBody
-    public Mono<CustomError> handleBadRequestException(NoContentException ex) {
+    public Mono<CustomError> handleNoContentException(NoContentException ex) {
         CustomError customError = new CustomError(new Date(), HttpStatus.NO_CONTENT.value(), ex.getMessage());
+        return Mono.just(customError);
+    }
+
+    @ExceptionHandler(BadRequestException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ResponseBody
+    public Mono<CustomError> handleBadRequestException(BadRequestException ex) {
+        CustomError customError = new CustomError(new Date(), HttpStatus.BAD_REQUEST.value(), ex.getMessage());
         return Mono.just(customError);
     }
 }

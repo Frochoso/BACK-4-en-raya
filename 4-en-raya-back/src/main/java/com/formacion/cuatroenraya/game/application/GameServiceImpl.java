@@ -1,7 +1,8 @@
 package com.formacion.cuatroenraya.game.application;
 
-import com.formacion.cuatroenraya.exceptions.playerExceptions.NoContentException;
+import com.formacion.cuatroenraya.exceptions.playerExceptions.BadRequestException;
 import com.formacion.cuatroenraya.exceptions.playerExceptions.EntityNotFoundException;
+import com.formacion.cuatroenraya.exceptions.playerExceptions.NoContentException;
 import com.formacion.cuatroenraya.game.domain.Game;
 import com.formacion.cuatroenraya.game.infrastructure.controller.dto.GameOutputDto;
 import com.formacion.cuatroenraya.game.infrastructure.repository.GameRepository;
@@ -11,6 +12,8 @@ import com.formacion.cuatroenraya.player.infrastructure.repository.PlayerReposit
 import com.formacion.cuatroenraya.records.application.RecordsServiceImpl;
 import org.mapstruct.factory.Mappers;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -52,6 +55,7 @@ public class GameServiceImpl implements GameService {
                     game.setSize(newSize);
                     game.setPlayer1Id(playerId);
                     game.setPlayer2Id(null);
+                    game.setTurn(playerId);
 
                     return gameRepository.save(game);
                 }))
@@ -64,8 +68,12 @@ public class GameServiceImpl implements GameService {
         return gameRepository.findById(idManager.getGameId())
                 .switchIfEmpty(Mono.error(new EntityNotFoundException("Game not found")))
                 .flatMap(game -> {
-                    return executeMove(idManager, game)
-                            .then(finishMove(game, idManager.getPlayerId()));
+                    if (game.getTurn() == idManager.getPlayerId()) {
+                        return executeMove(idManager, game)
+                                .then(finishMove(game, idManager.getPlayerId()));
+                    } else {
+                        return Mono.error(new BadRequestException("It's the other player's turn"));
+                    }
                 })
                 .then();
     }
@@ -73,7 +81,31 @@ public class GameServiceImpl implements GameService {
     public Mono<Void> finishMove(Game game, Integer playerId) {
 
         game.setWinner(checkWinner(game.getSize(), playerId));
-        return gameRepository.save(game).then();
+
+        HttpStatus httpStatus = HttpStatus.OK;
+        String message = " ";
+
+        if (game.getWinner() == playerId) {
+            httpStatus = HttpStatus.CREATED;
+            message = "The player: " + playerId + " is the winner!";
+
+        } else if (game.getWinner() == -1) {
+            httpStatus = HttpStatus.OK;
+            game.setTurn(game.getTurn() == game.getPlayer1Id() ? game.getPlayer2Id() : game.getPlayer1Id()); // Change the players' turn
+
+        } else if (game.getWinner() == 0) {
+            httpStatus = HttpStatus.NO_CONTENT;
+        }
+
+        final String finalMessage = message;
+        final HttpStatus finalHttpStatus = httpStatus;
+
+        return gameRepository.save(game)
+                .then(Mono.defer(() -> {
+                    ResponseEntity<String> responseEntity = ResponseEntity.status(finalHttpStatus).body(finalMessage);
+                    return Mono.just(responseEntity);
+                }))
+                .then();
     }
 
     private Mono<Void> executeMove(IdManager idManager, Game game) {
@@ -97,7 +129,7 @@ public class GameServiceImpl implements GameService {
         idManager.setRow(row);
         return playerRepository
                 .findPlayerByGameIdAndPlayerId(game.getId(), idManager.getPlayerId())
-                .flatMap(player -> recordsServiceImpl.createMove(game.getId(), player.getId(), idManager.getRow(),
+                .flatMap(player -> recordsServiceImpl.createMove(idManager.getGameId(), idManager.getPlayerId(), idManager.getRow(),
                         idManager.getColumn()))
                 .then();
     }
@@ -105,57 +137,67 @@ public class GameServiceImpl implements GameService {
     @Override
     public int checkWinner(Integer[][] size, Integer playerId) {
 
-        Integer counter = 0;
+        // Comprueba filas horizontales
+        for (int i = 0; i < 6; i++) {
+            for (int j = 0; j < 3; j++) {
+                if (size[i][j] == playerId &&
+                        size[i][j + 1] == playerId &&
+                        size[i][j + 2] == playerId &&
+                        size[i][j + 3] == playerId) {
+                    return playerId; // El jugador actual ganó
+                }
+            }
+        }
+
+        // Comprueba columnas verticales
+        for (int i = 0; i < 7; i++) {
+            for (int j = 0; j < 3; j++) {
+                if (size[j][i] == playerId &&
+                        size[j + 1][i] == playerId &&
+                        size[j + 2][i] == playerId &&
+                        size[j + 3][i] == playerId) {
+                    return playerId; // El jugador actual ganó
+                }
+            }
+        }
+
+        // Comprueba diagonales ascendentes
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 4; j++) {
+                if (size[i][j] == playerId &&
+                        size[i + 1][j + 1] == playerId &&
+                        size[i + 2][j + 2] == playerId &&
+                        size[i + 3][j + 3] == playerId) {
+                    return playerId; // El jugador actual ganó
+                }
+            }
+        }
+
+        // Comprueba diagonales descendentes
+        for (int i = 0; i < 3; i++) {
+            for (int j = 3; j < 7; j++) {
+                if (size[i][j] == playerId &&
+                        size[i + 1][j - 1] == playerId &&
+                        size[i + 2][j - 2] == playerId &&
+                        size[i + 3][j - 3] == playerId) {
+                    return playerId; // El jugador actual ganó
+                }
+            }
+        }
 
         // Comprueba el empate - Devuelve 0 si hay empate
+        boolean isFull = true;
         for (int i = 0; i < 6; i++) {
-            if (size[5][i] != 0) {
-                counter++;
-            }
-
-            if (counter >= 7) {
-                return 0;
-            }
-        }
-
-        // Casos de victoria - Devuelve el Id del ganador
-        for (int i = 1; i < 5; i += 1) {
-            for (int j = 0; j < 6 - 3; j += 1) {
-                if (size[i][j] == playerId && size[i][j + 1] == playerId
-                        && size[i][j + 2] == playerId && size[i][j + 3] == playerId) {
-                    return playerId;
+            for (int j = 0; j < 7; j++) {
+                if (size[i][j] == 0) {
+                    isFull = false;
+                    break;
                 }
             }
         }
 
-        for (int i = 0; i < 5; i += 1) {
-            for (int j = 0; j < 6 - 3; j += 1) {
-                if (size[j][i] == playerId && size[j + 1][i] == playerId
-                        && size[j + 2][i] == playerId && size[j + 3][i] == playerId) {
-                    return playerId;
-
-                }
-            }
-        }
-
-        for (int i = 0; i < 6 - 4 + 1; i += 1) {
-            for (int j = 0; j < 5 - 4 + 1; j += 1) {
-                if (size[j][i] == playerId && size[j + 1][i + 1] == playerId
-                        && size[j + 2][i + 2] == playerId && size[j + 3][i + 3] == playerId) {
-                    return playerId;
-
-                }
-            }
-        }
-
-        for (int i = 6; i > 3; i -= 1) {
-            for (int j = 0; j < 5 - 3; j += 1) {
-                if (size[j][i - 1] == playerId && size[j + 1][i - 2] == playerId
-                        && size[j + 2][i - 3] == playerId && size[j + 3][i - 4] == playerId) {
-                    return playerId;
-
-                }
-            }
+        if (isFull) {
+            return 0; // Empate
         }
 
         return -1; // La partida continua, no ha terminado

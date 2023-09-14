@@ -15,4 +15,6 @@ public class GameInputDto {
 
     private Integer[][] size;
 
+    private Integer turn;
+
 }
