@@ -215,7 +215,7 @@ public class GameServiceImpl implements GameService {
 
     @Override
     public Flux<GameOutputDto> getAllGames() {
-        Flux<Game> gamesFlux = gameRepository.findAll();
+        Flux<Game> gamesFlux = gameRepository.findAllOnlyOnePlayer();
 
         return gamesFlux
                 .map(gamesResult -> gameMapper.gameToGameOutputDto(gamesResult));
